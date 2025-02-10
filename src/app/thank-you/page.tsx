@@ -20,6 +20,7 @@ const ThankYouPage = ({ params }: { params: { slug: string } }) => {
   const router = useRouter()
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'pending' | 'success' | 'error'>('idle')
   const { toast } = useToast()
+  const [requestId, setRequestId] = useState<string | null>(null)
   
   const iPhone = iPhoneDetails[params.slug];
   
@@ -70,6 +71,7 @@ const ThankYouPage = ({ params }: { params: { slug: string } }) => {
 
       if (paymentResponse) {
         setPaymentStatus('success')
+        setRequestId(paymentResponse)
         toast({
           title: 'Payment Successful',
           description: 'Thank you for your purchase! Your payment has been processed.',
@@ -97,6 +99,27 @@ const ThankYouPage = ({ params }: { params: { slug: string } }) => {
       console.log("error", error)
     }
   }
+  async function checkPaymentStatus() {
+    const response = await fetch(`https://nine-ad9w.onrender.com/request/one/${requestId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+
+    const data = await response.json()
+
+    if (data.status === 'PAID') {
+        console.log('Payment successful!')
+    } else {
+        setTimeout(checkPaymentStatus, 60000) // Poll every 1 minute (60000 ms)
+    }
+}
+
+useEffect(() => {
+    checkPaymentStatus()
+}, [])
+
   const truncateAddress = (address: string) => {
     return address.length > 10
       ? `${address.slice(0, 6)}...${address.slice(-4)}`
