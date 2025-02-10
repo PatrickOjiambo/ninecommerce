@@ -23,7 +23,30 @@ const ReceiptPage = () => {
     // Logic to download the receipt as PDF
     console.log('Downloading receipt...')
   }
+async function checkPaymentStatus() {
+    const response = await fetch(`https://nine-ad9w.onrender.com/request/one/${requestId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ orderId: orderDetails.orderId }),
+    })
 
+    const data = await response.json()
+
+    if (data.status === 'PAID') {
+        setOrderDetails((prevDetails) => ({
+            ...prevDetails,
+            paymentStatus: 'Success',
+        }))
+    } else {
+        setTimeout(checkPaymentStatus, 60000) // Poll every 1 minute (60000 ms)
+    }
+}
+
+useEffect(() => {
+    checkPaymentStatus()
+}, [])
   const handleGoHome = () => {
     router.push('/')
   }
